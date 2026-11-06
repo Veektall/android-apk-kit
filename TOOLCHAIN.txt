@@ -1,0 +1,8 @@
+OFFLINE NATIVE APK TOOLCHAIN (free, no ads, no Gradle, no internet)
+Needs: Linux x86-64, Java 17+ (javac), python3.
+1. unzip toolchain.zip -d kit
+2. Put your app in kit/app/ : AndroidManifest.xml, java/<package path>/*.java, app.env (APP_NAME=MyApp), optional res/ and assets/
+3. bash kit/build.sh kit/app
+4. Get kit/out/MyApp.apk (install on Android)
+Apps are written in Java against the plain Android SDK (android.app.Activity, android.view.View, Canvas, widgets). No AndroidX/Compose libraries.
+Signed with keys/debug.keystore (public debug key, password "android"): fine for sharing APKs, not for Play Store.

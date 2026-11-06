@@ -1,7 +1,9 @@
+# ROUTE A: build on GitHub. Any change under app/ builds a native APK.
+# Download: Releases > latest > app.apk  (also kept as the "apk" artifact on the run)
 name: Build APK
 on:
   push:
-    paths: ["app/**"]
+    paths: ["app/**", "build.sh"]
   workflow_dispatch:
 permissions:
   contents: write
@@ -12,15 +14,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "17" }
-      - name: Build
-        run: |
-          set -a; source app/app.env; set +a
-          bash build.sh app/index.html "$APP_NAME" "$APP_PACKAGE"
-          cp "out/$APP_NAME.apk" "out/app.apk"
+      - name: Build native APK
+        run: bash build.sh app
       - uses: actions/upload-artifact@v4
-        with: { name: apk, path: out/*.apk }
+        with: { name: apk, path: out/*.apk, retention-days: 7 }
       - name: Publish download link
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
           gh release delete latest -y --cleanup-tag || true
-          gh release create latest out/*.apk --title "Latest APK" --notes "Built from app/index.html"
+          gh release create latest out/*.apk --title "Latest APK" --notes "Native build of app/ at ${GITHUB_SHA::7}"
