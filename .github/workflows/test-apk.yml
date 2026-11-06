@@ -5,6 +5,8 @@ on:
     inputs:
       apk_url: { description: "APK URL", default: "https://github.com/Veektall/android-apk-kit/releases/download/latest/app.apk" }
       package: { description: "Package id", default: "com.pdent.candypop" }
+permissions:
+  contents: write
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -32,3 +34,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: screens, path: screens/ }
+      - name: Publish screenshots
+        if: always()
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          gh release delete screens -y --cleanup-tag -R ${{ github.repository }} || true
+          gh release create screens screens/*.png --title "Emulator screenshots" --notes "From test run" -R ${{ github.repository }}
