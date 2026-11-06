@@ -1,0 +1,34 @@
+# Installs the latest APK on an Android emulator, launches it, swipes, and saves screenshots (artifact: screens).
+name: Test APK on emulator
+on:
+  workflow_dispatch:
+    inputs:
+      apk_url: { description: "APK URL", default: "https://github.com/Veektall/android-apk-kit/releases/download/latest/app.apk" }
+      package: { description: "Package id", default: "com.pdent.candypop" }
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - run: curl -fsSL -o app.apk "${{ inputs.apk_url }}" && mkdir screens
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            adb install -r app.apk
+            adb shell monkey -p ${{ inputs.package }} -c android.intent.category.LAUNCHER 1
+            sleep 6
+            adb exec-out screencap -p > screens/1-launch.png
+            adb shell input swipe 300 900 300 1050 200; sleep 2; adb shell input swipe 500 1100 650 1100 200; sleep 2
+            adb shell input swipe 700 800 700 650 200; sleep 2; adb shell input swipe 400 1200 250 1200 200; sleep 2
+            adb exec-out screencap -p > screens/2-after-swipes.png
+            adb shell pidof ${{ inputs.package }} && echo "APP RUNNING" || (echo "APP NOT RUNNING"; adb logcat -d | grep -iE "AndroidRuntime|FATAL" | tail -40; exit 1)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: screens, path: screens/ }

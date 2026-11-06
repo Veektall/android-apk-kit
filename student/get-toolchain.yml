@@ -1,0 +1,17 @@
+# ROUTE B helper. Copy into YOUR repo as .github/workflows/get-toolchain.yml and push.
+# It puts toolchain.zip in this repo's Actions artifacts (name: toolchain) so ChatGPT can download it
+# into its workspace, unzip it, and run: bash build.sh app
+name: Get Toolchain
+on:
+  push:
+    paths: [".github/workflows/get-toolchain.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsSL -o toolchain.zip https://github.com/Veektall/android-apk-kit/releases/download/toolchain/toolchain.zip && ls -la toolchain.zip
+      - uses: actions/upload-artifact@v4
+        with: { name: toolchain, path: toolchain.zip, retention-days: 7, compression-level: 0 }
